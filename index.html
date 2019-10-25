@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html style="height: 100%"><head>
+    <meta charset="utf-8">
+    </head> 
+    <body style="height: 100%; margin: 0">
+    <div id="container" style="height: 100%; -webkit-tap-highlight-color: transparent; user-select: none; position: relative; background: transparent;" _echarts_instance_="ec_1560517499527"><div style="position: relative; overflow: hidden; width: 1344px; height: 650px; padding: 0px; margin: 0px; border-width: 0px; cursor: default;"><canvas width="1680" height="812" data-zr-dom-id="zr_0" style="position: absolute; left: 0px; top: 0px; width: 1344px; height: 650px; user-select: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); padding: 0px; margin: 0px; border-width: 0px;"></canvas><canvas width="1680" height="812" data-zr-dom-id="zr_2" style="position: absolute; left: 0px; top: 0px; width: 1344px; height: 650px; user-select: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); padding: 0px; margin: 0px; border-width: 0px;"></canvas></div><div></div></div> 
+    <!-- <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/echarts-all-3.js"> </script>
+    <script type="text/javascript" src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"> </script> -->
+    <script type="text/javascript" src="lib/echarts.min.js"></script>
+    <script type="text/javascript" src="lib/jquery.min.js"> </script>
+
+<script type="text/javascript">
+var dom = document.getElementById("container");
+var myChart = echarts.init(dom);
+var app = {};
+myChart.showLoading();
+
+// 各个行政区与国家之间的映射关系
+var state_district_map = {
+	"中国": ["江苏", "湖北", "陕西", "安徽", "福建", "湖南", "广东", "广西", "浙江", "江西", "山西", "河南", "山东", "甘肃", "云南", "贵州", "直隶", "黑龙江", "吉林", "青海", "内蒙古", "奉天", "四川", "新疆", "西藏"],
+	"外蒙古（独立）": ["乌里雅苏台"],
+	"台湾(日本占领)": ["台湾(日本占领)"],
+	"日本": ["日本"]
+    };
+
+// 城市坐标
+var citys_location = {
+        "南京": [118.800643, 32.066725], 
+        "武昌": [114.351201,30.566976], 
+        "西安": [108.943788,34.348917], 
+        "怀宁": [116.835007,30.741122], 
+        "福州": [119.32158, 26.07395], 
+        "长沙": [112.942595,28.237046], 
+        "番禺": [113.388757,22.94568],
+        "邕宁": [108.491114,22.766879],
+        "杭州": [120.213022,30.255202],
+        "南昌": [115.86322,28.691212],
+        "阳曲": [112.677353,38.066551],
+        "开封": [114.313014,34.804525],
+        "历城": [117.070022,36.687619],
+        "皋兰": [103.951779,36.339754],
+        "昆明": [102.850816,24.875817],
+        "贵阳": [106.634577,26.6551],
+        "天津": [117.209052,39.14548],
+        "龙江": [123.209679,47.344958],
+        "吉林": [126.552472,43.84533],
+        "沈阳": [123.454423,41.722401],
+        "成都": [104.07968,30.657506],
+        "迪化": [87.621519,43.832527],
+        "拉萨": [91.117481,29.651974],
+        "仙台":[140.87193489074707,38.26684701594281],
+        "东京":[139.7647726535797,35.68160530533613],
+        "绍兴":[120.5732077360153,29.995957128270863],
+        "北平":[116.39091968536377,39.91204048926006],
+        "上海":[121.46855592727661,31.235114421248575],
+        "厦门":[118.0790376663208,24.45804900677667],
+        "台北":[121.56517982482909,25.045092398254987],
+        "台东":[121.1455750465393, 22.75590089405646],
+        "上海":[121.3714599609375,31.08586989620833],
+        "徽州":[118.58511686325073,30.063634252205194],
+        "香港":[114.17747497558594,22.276706726696727],
+        "纽约":[-73.99223327636719,40.72540497175607],
+        "伦敦":[-0.11475563049316405,51.483681303556544],
+        "巴黎":[2.36081600189209,48.84463821388804]
+};
+
+// 首府列表
+var capitals_list = ["北平","台北","成都", "福州","南京", "武昌", "西安", "怀宁", "太原", "长沙","番禺", "邕宁", "杭州", "南昌", "阳曲", "开封", "历城", "皋兰", "昆明", "贵阳", "天津", "龙江", "吉林", "沈阳", "迪化"]; 
+// 城市数据，都用白色字体
+var city_series = {
+    type: 'effectScatter',      //带有涟漪特效动画的散点（气泡）图
+    coordinateSystem: 'geo',    //该系列使用的坐标系为地理坐标系
+    zlevel: 2,                  //zlevel 大的 Canvas 会放在 zlevel 小的 Canvas 的上面。
+    symbolSize: 5,              //标记的大小,也可以用数组分开表示宽和高，例如 [20, 10] 表示标记宽为20，高为10。
+    rippleEffect: {             //涟漪特效相关配置
+        brushType: 'stroke'       //波纹的绘制方式，可选 'stroke' 和 'fill'
+    },
+    label: {                    //图形上的文本标签，可用于说明图形的一些数据信息
+        normal: {
+            show: true,
+            position: 'right',  //标签的位置
+            formatter: '{b}',   //标签内容格式器，支持字符串模板和回调函数两种形式，字符串模板与回调函数返回的字符串均支持用 \n 换行
+            textStyle: {        //{b}：数据名
+                color: '#101010'
+            }
+        }
+    },
+    data: Object.keys(citys_location).map(function(key) {
+        var item = new Object();
+        item.name = key;
+        item.value = citys_location[key];
+        if (capitals_list.indexOf(key) != -1) { //首都城市图标赋橙色，非首都图标黑色。
+            item.itemStyle = {
+                normal: {
+                    color: '#FF4D40'  //橙色
+                }
+            };
+        } else {
+            item.itemStyle = {
+                normal: {
+                    color: '#101010'  //黑色
+                }
+            };
+        }
+
+        return item;
+    })
+};
+
+// 地图底图着色数据，应该都用浅色，防止与黑色的字冲突
+var state_color_dict = {
+    '中国': 'rgb(255, 128, 51)',
+    '海外': 'rgb(135, 222, 173)', //第二个标签无法显示
+    '日本': 'rgb(255, 228, 196)',
+    '台湾（日本占领）': 'rgb(185, 222, 173)',
+    '外蒙古（独立）': 'rgb(255, 229, 180)',
+
+};
+// 给地图着色
+var paintMap = function(state, colors) {
+    var data = [];
+    Object.keys(state).forEach(function(key) {
+        // key: the name of the object key
+        districts = state[key];
+        for (var i = 0; i < districts.length; i++) {
+            var item = new Object();
+            item.name = districts[i];
+            item.itemStyle = {
+                normal: {
+                    areaColor: colors[key]
+                }
+            };
+            data.push(item);
+        }
+    });
+    return data;
+};
+// 地图图例
+// echarts要求图例必须与某个series绑定，为此必须制造一些虚假series
+var fake_series = Object.keys(state_color_dict).map(function(item) {
+    return {
+        type: 'scatter',                 //散点（气泡）图
+        name: item,
+        coordinateSystem: 'geo',
+        itemStyle: {
+            normal: {
+                color: state_color_dict[item]
+            }
+        }
+    };
+});
+// 设置图例数据
+var map_legend_data = Object.keys(state_color_dict).map(function(item) {
+    return {
+        name: item,
+        icon: 'roundRect', //圆角矩形
+        //textStyle: {color: state_color_dict[item]}
+    };
+});
+
+// 时间线
+var time_ticks = [{
+                    value: "1881年", 
+                    tooltip: {
+                        formatter: '{b} 鲁迅生于浙江绍兴城内东昌坊新台门周家。幼名阿张，长根，长庚，学名周樟寿。'  
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: "1891年", 
+                    tooltip: {
+                        formatter: '{b} 胡适出生于江苏省松江府川沙县（今上海市浦东新区）'  
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1892年',
+                    tooltip: {
+                        formatter: '{b} 鲁迅入三味书屋从寿镜吾读书，课余影描图画。'  
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1893年',
+                    tooltip: {
+                        formatter: '{b} 胡适随母亲冯顺弟前往台湾其父胡传任所。1894年，中日甲午战争爆发，随母亲离开台湾返回上海，后回祖籍安徽省徽州绩溪县上庄村，进家塾读书。'  
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1898年',
+                    tooltip: {
+                        formatter: '{b} 鲁迅入南京水师学堂，改名周树人。后转入江南陆师学堂附设矿务铁路学堂，学开矿。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1904年',
+                    tooltip: {
+                        formatter: '{b}鲁迅公费赴日本留学。9月，入仙台医学专门学校（现东北大学）肄业，相识藤野严九郎。胡适与江东秀订婚，入梅溪小学堂。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1906年',
+                    tooltip: {
+                        formatter: '{b}夏秋间，鲁迅被骗回国与朱安结婚。旋即复赴日本，7月，从仙台回到东京，不再入学读书，专门从事文艺译著工作，此后几年通过不同方式学习了德语，俄语。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                }, 
+                {
+                    value: "1909年",
+                    tooltip: {
+                        formatter: '{b}鲁迅归国，任杭州、浙江两级师范学堂生理学和化学教员兼任日本教员铃木珪寿的植物学翻译。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                }, 
+                {
+                    value: "1910年",
+                    tooltip: {
+                        formatter: '{b}鲁迅任绍兴中学堂教员兼监学。1911年，写个人的第一篇小说文言小说《怀旧》。胡适公费留学美国，入康奈尔大学选读农科。1915年，入哥伦比亚大学哲学系，师从约翰·杜威。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                }, 
+                {
+                    value: '1912年',
+                    tooltip: {
+                        formatter: '{b} 鲁迅应教育总长蔡元培之邀，任教育部社会教育司第一科科长。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1917年',
+                    tooltip: {
+                        formatter: '{b} 鲁迅参加《新青年》改组，任编委。胡适在《新青年》上发表了《文学改良刍议》。同年，通过哲学博士学位的最后考试，回国任北京大学教授，参加编辑《新青年》，回安徽绩溪与江冬秀结婚。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1918年',
+                    tooltip: {
+                        formatter: '{b} 以鲁迅为笔名发表中国现代文学史上第一篇用现代体式创作的白话短篇小说《狂人日记》，载在《新青年》第四卷第五号。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1920年',
+                    tooltip: {
+                        formatter: '{b} 鲁迅在北京大学，北京高等师范学校讲授中国小说史，6月，读《共产党宣言》中文译本盛赞译者。9月，发表小说《风波》。胡适离开《新青年》，在南京大学暑期学校讲学。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1923年',
+                    tooltip: {
+                        formatter: '{b} 小说集《呐喊》出版；鲁迅与弟弟周作人分居，迁至西四塔胡同61号居住，分居原因不明。胡适与陈西滢、王世杰等创办《现代评论》周刊。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1926年',
+                    tooltip: {
+                        formatter: '{b}“三一八惨案”发生。鲁迅作《死地》、《记念刘和珍君》等抨击段祺瑞政府屠杀学生的罪行，遭追捕，避难于山本医院。避难期间笔耕不辍。8月，《彷徨》出版，赴厦门大学任国文系教授，12月辞职。胡适与其师郭秉文等人在美国发起成立华美协进社。游历英国、法国、美国、日本诸国。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1927年',
+                    tooltip: {
+                        formatter: '{b} 1月，鲁迅赴中山大学任教。9月，致信台静农，拒绝作为诺贝尔文学奖候选人，离开广州赴上海，并与许广平在上海开始同居生活。胡适正式取得哥伦比亚大学哲学博士学位。与徐志摩等组织成立新月书店。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1929年',
+                    tooltip: {
+                        formatter: '{b}鲁迅开始大量搜集马克思主义著作，并为之翻译。与冯雪峰多次磋商组建“中国左翼作家联盟”。胡适在《新月》杂志上发表《人权与约法》一文，标志人权运动的开始，随后发表《我们什么时候才可有宪法——对于建国大纲的疑问》、《知难，行亦不易—孙中山先生的“行易知难”说述评》、《新文化运动与国民党》。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1932年',
+                    tooltip: {
+                        formatter: '{b}鲁迅在《阿Q正传》中猛批胡适，毫不留情。与艾青等人发起“春地美术研究所”。胡适任北京大学文学院院长兼中国文学系主任，并邀蒋廷黻、丁文江、傅斯年、翁文灏创办《独立评论》，胡适先后共为其撰写了1309篇文章。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1935年',
+                    tooltip: {
+                        formatter: '{b}鲁迅始译果戈里《死魂灵》。6月，集成《新文学大系·小说二集》并作长序。胡适接受香港大学名誉法学博士学位，多次要求出任驻日本大使未果。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1936年',
+                    tooltip: {
+                        formatter: '{b}鲁迅于上海逝世。胡适发文悼念鲁迅先生。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1937年',
+                    tooltip: {
+                        formatter: '{b}胡适任中华民国驻美国大使。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1946年',
+                    tooltip: {
+                        formatter: '{b}胡适任北京大学校长。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1948年',
+                    tooltip: {
+                        formatter: '{b}时局变化，胡适在在南京方面的劝说下离开，前往上海定居。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                },
+                {
+                    value: '1949年 ',
+                    tooltip: {
+                        formatter: '{b}胡适应中华民国政府要求，从上海搭威尔逊轮前往美国当说客，为和平解决国共内战问题寻求美国政府的介入。后定居台湾。'
+                    },
+                    symbol: 'diamond',
+                    symbolSize: 16
+                }];
+
+// 标题列表
+var title_list = [
+  '鲁迅出生',
+  '十年后，胡适出生',
+  "鲁迅入三味书屋",
+  "胡适避难后入家塾读书",
+  '鲁迅入南京水师学堂，改名周树人',
+  '鲁迅留学日本；胡适入梅溪小学',
+  '鲁迅与朱安结婚。旋即复赴日本',
+  '鲁迅归国',
+  '鲁迅回到家乡绍兴；胡适留学美国',
+  '鲁迅任教育部社会教育司第一科科长',
+  '鲁迅与胡适通过《新青年》相识',
+  "鲁迅发表《狂人日记》",
+  "二人北京交往密切",
+  '鲁迅与弟弟周作人分居，与胡适出现政见分歧',
+  '鲁迅离京；胡适游历诸国',
+  '二人在上海相遇',
+  '二人走向相反的道路',
+  '鲁迅在《阿Q正传》中猛批胡适',
+  " ",
+  '鲁迅逝世于上海',
+  "胡适出任中华民国驻美国大使",
+  '胡适任北京大学校长',
+  '胡适定居上海',
+  '胡适定居台湾',
+];
+// 获取各人轨迹
+var persons = ["鲁迅","胡适"];
+var full_tracks = [
+["绍兴", "南京", "仙台", "绍兴","仙台", "东京", "杭州","绍兴", "北平", "西安", "北平", "厦门", "番禺", "上海"],
+["上海","台东","上海","徽州","上海","纽约","北平","徽州","北平","南京","北平","伦敦","纽约","巴黎","东京","上海","北平","香港","北平","纽约","北平","上海","纽约","台北"]
+];
+var citys_num_passed = [ //数量和时间线相对应，数字表示一次移动几个地方
+    [0, 0, 0,1, 2, 3, 6, 7, 8, 9, 9, 9, 9,11, 13, 14, 15, 15, 15, 15],
+    [0,1,1,4,4,5,5,5,6,6,9,9,11,11,15,16,17,17,19,19,20,21,22,24 ]
+];
+// 转换为路线数据所需格式
+var points2lines = function(points) {
+    var tracks = [];
+    for (var i = 0; i < points.length - 1; i++) {
+        var fromCoord = citys_location[points[i]];
+        var toCoord = citys_location[points[i + 1]];
+        if (fromCoord && toCoord) {
+            tracks.push({
+                name: points[i] + '=>' + points[i + 1],
+                coords: [fromCoord, toCoord]
+            });
+        }
+    }
+    return tracks;
+};
+//tracks_data = points2lines(life_tracks);
+tracks_data = full_tracks.map(function(item) {
+    return points2lines(item);
+});
+// 动态路线模板
+var line_series_template = {
+    type: 'lines',   //用于带有起点和终点信息的线数据的绘制，主要用于地图上的航线，路线的可视化。
+    zlevel: 2,
+    symbol: ['none', 'arrow'],
+    symbolSize: 10,
+    coordinateSystem: 'geo',
+    effect: {          //线特效的配置
+        //show: true,
+        period: 6,     //特效动画的时间，单位为 s
+        trailLength: 0,  //特效尾迹的长度。取从 0 到 1 的值，数值越大尾迹越长。
+        symbol: 'arrow',  //特效图形的标记。
+        symbolSize: 10    //特效标记的大小
+    },
+    lineStyle: {
+        normal: {
+            color: '#008DAB',
+            width: 2,
+            opacity: 0.8,     //图形透明度。支持从 0 到 1 的数字，为 0 时不绘制该图形。
+            curveness: 0.1    //边的曲度，支持从 0 到 1 的值，值越大曲度越大。
+        }
+    },
+    data: [] //convertData(life_tracks)
+};
+
+// 基底数据序列
+var person_line_colors = ['rgb(25,89,102)','RGB(91,194,130)'];
+var person_line_curveness = [0.05, 0.1];
+var line_series_template_str = JSON.stringify(line_series_template);  //JSON.stringify()将一个JavaScript值(对象或者数组)转换为一个 JSON字符串
+var base_series = [city_series].concat(fake_series);
+for(var n = 0; n < persons.length; n++ ){
+  var line_series = JSON.parse(line_series_template_str); //JSON.parse() 方法将数据转换为 JavaScript 对象
+      line_series.name = persons[n];
+      line_series.lineStyle.normal.color = person_line_colors[n];
+      line_series.lineStyle.normal.curveness = person_line_curveness[n];
+      base_series.push(line_series);
+}
+
+//var planePath = 'path://M1705.06,1318.313v-89.254l-319.9-221.799l0.073-208.063c0.521-84.662-26.629-121.796-63.961-121.491c-37.332-0.305-64.482,36.829-63.961,121.491l0.073,208.063l-319.9,221.799v89.254l330.343-157.288l12.238,241.308l-134.449,92.931l0.531,42.034l175.125-42.917l175.125,42.917l0.531-42.034l-134.449-92.931l12.238-241.308L1705.06,1318.313z';
+var iconPath = 'path://M2,2 L2,11 L10,6 L2,2';  //箭头形状
+// 增补路线图例
+var tracks_legend_data = [];
+for(var n = 0; n < persons.length; n++ ){
+  tracks_legend_data.push({
+    name: persons[n],
+    icon: iconPath 
+  });
+}
+
+
+
+
+
+// 注册地图
+$.get('./lib/mapp.geojson', function (geoJson) {
+    echarts.registerMap('mapp', geoJson);
+
+    //注册的地图只在这个函数内有效
+    var option = {
+        baseOption: {
+            timeline: {                 //时间线
+                axisType: 'category',   //类目轴，适用于离散的类目数据  
+                orient: 'vertical',    //摆放方式，可选值有:'horizontal'：水平放置;'vertical'垂直
+                autoPlay: true,         //表示是否自动播放。
+                inverse: true,         //是否反向放置 timeline，反向则首位颠倒过来。
+                playInterval: 2000,    //表示播放的速度（跳动的间隔），单位毫秒（ms）。
+                right: 30,
+                top: 40,
+                bottom: 40,
+                width: 110,
+                data: time_ticks,
+            }, //end baseOption
+		        tooltip: {},
+            title: {
+                //text: '',
+                //subtext: '制图: ',
+                top: '10%',
+                left: '60%',
+                textStyle: {
+                    color: '#2e2e2e'
+                }
+            },
+
+            geo: {
+                map: 'mapp',
+                show: true,
+                roam: true,
+                regions: paintMap(state_district_map, state_color_dict)
+            },
+            //TODO 加上图例
+            legend: [{
+                orient: 'vertical',
+                top: '70%',
+                left: '75%',
+                selectedMode: false,
+                data: map_legend_data,
+                textStyle: {
+                    color: '#333'
+                }
+            },
+            {
+              orient: 'vertical',//人物图例
+              top: '70%',
+              left: '80%',
+              data: tracks_legend_data
+            }
+            ],
+            series: base_series
+        },
+        options: []
+    };// end option
+    myChart.setOption(option);
+    myChart.hideLoading();
+    //base_series =  [city_series].concat(fake_series);
+
+    //TODO: 给关键点事件添加副标题
+    // 添加路线图例
+    // 
+    var series_num = option.baseOption.series.length;
+    var persons_num = persons.length;
+
+    var update_series = [];//Array(series_num).fill({});
+    for(var n = 0; n < series_num; n++){
+      update_series.push({})
+    }
+    for(var n = 0; n < persons_num; n++){
+      update_series[series_num-persons_num+n].data = [];
+    }
+
+    update_series[2].name = 'hi';
+    var update_series_str = JSON.stringify(update_series);
+    for (var n = 0; n < time_ticks.length; n++) {
+        var updater = JSON.parse(update_series_str);
+
+        for(var i = 0; i < persons_num; i++){
+          if(citys_num_passed[i][n] > 1){
+            var data = tracks_data[i].slice(0, citys_num_passed[i][n]-1); //在数组中读取元素
+            updater[series_num-persons_num+i].data = data;
+          }
+        }
+        if(typeof time_ticks[n] === 'string'){
+          var title_suffix = time_ticks[n];
+        }
+        else {
+          var title_suffix = time_ticks[n].value;
+        }
+
+        option.options.push({
+          title: {
+                 text: '   动态轨迹图' + ' （' + title_suffix + '） ' +
+                   '\n\n' +'主要事迹：'+ title_list[n],
+                 },
+          series: updater
+        });
+
+    }
+    
+    myChart.setOption(option);
+// end $.get
+});
+
+
+
+</script>
+
+
+</body></html>
